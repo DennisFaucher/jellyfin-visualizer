@@ -114,6 +114,7 @@ class HtmlAudioPlayer {
 
             let val = options.url;
             console.debug('playing url: ' + val);
+            initAudioGraph(elem);
             import('../../scripts/settings/userSettings').then((userSettings) => {
                 let normalizationGain;
                 if (userSettings.selectAudioNormalization() == 'TrackGain') {
@@ -128,10 +129,8 @@ class HtmlAudioPlayer {
                     return;
                 }
 
-                if (!self.gainNode) {
-                    addGainElement(elem);
-                    if (!self.gainNode) return;
-                }
+                insertGainNode();
+                if (!self.gainNode) return;
 
                 if (normalizationGain) {
                     self.normalizationGain = Math.pow(10, normalizationGain / 20);
@@ -289,22 +288,27 @@ class HtmlAudioPlayer {
             return elem;
         }
 
-        function addGainElement(elem) {
+        function initAudioGraph(elem) {
+            if (self.audioCtx) return;
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext; /* eslint-disable-line compat/compat */
-
                 const audioCtx = new AudioContext();
                 const source = audioCtx.createMediaElementSource(elem);
-
-                const gainNode = audioCtx.createGain();
-
-                source.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-
-                self.gainNode = gainNode;
+                source.connect(audioCtx.destination);
+                self.audioCtx = audioCtx;
+                self.sourceNode = source;
             } catch (e) {
                 console.error('Web Audio API is not supported in this browser', e);
             }
+        }
+
+        function insertGainNode() {
+            if (self.gainNode || !self.audioCtx) return;
+            const gainNode = self.audioCtx.createGain();
+            self.sourceNode.disconnect();
+            self.sourceNode.connect(gainNode);
+            gainNode.connect(self.audioCtx.destination);
+            self.gainNode = gainNode;
         }
 
         function onEnded() {

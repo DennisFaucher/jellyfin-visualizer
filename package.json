@@ -50,6 +50,7 @@
     "html-webpack-plugin": "5.6.7",
     "jsdom": "29.1.1",
     "mini-css-extract-plugin": "2.10.2",
+    "patch-package": "8.0.1",
     "postcss": "8.5.16",
     "postcss-loader": "8.2.1",
     "postcss-preset-env": "10.6.1",
@@ -98,6 +99,8 @@
     "abortcontroller-polyfill": "1.7.8",
     "axios": "1.18.1",
     "blurhash": "2.0.5",
+    "butterchurn": "2.6.7",
+    "butterchurn-presets": "2.4.7",
     "classlist.js": "https://github.com/eligrey/classList.js/archive/1.2.20180112.tar.gz",
     "classnames": "2.5.1",
     "core-js": "3.49.0",
@@ -169,7 +172,8 @@
     "lint": "eslint",
     "test": "vitest --watch=false --config vite.config.ts",
     "test:watch": "vitest --config vite.config.ts",
-    "stylelint": "stylelint \"src/**/*.{css,scss}\""
+    "stylelint": "stylelint \"src/**/*.{css,scss}\"",
+    "postinstall": "patch-package"
   },
   "engines": {
     "node": ">=24.0.0",

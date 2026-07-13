@@ -1,74 +1,52 @@
-<h1 align="center">Jellyfin Web</h1>
-<h3 align="center">Part of the <a href="https://jellyfin.org">Jellyfin Project</a></h3>
+# jellyfin-visualizer
 
----
+A [Butterchurn](https://github.com/jagheterfredrik/butterchurn) (MilkDrop) visualization plugin for [Jellyfin Web](https://github.com/jellyfin/jellyfin-web). Renders WebGL visualizations behind the Now Playing page while music plays.
 
-<p align="center">
-<img alt="Logo Banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
-<br/>
-<br/>
-<a href="https://github.com/jellyfin/jellyfin-web">
-<img alt="GPL 2.0 License" src="https://img.shields.io/github/license/jellyfin/jellyfin-web.svg"/>
-</a>
-<a href="https://github.com/jellyfin/jellyfin-web/releases">
-<img alt="Current Release" src="https://img.shields.io/github/release/jellyfin/jellyfin-web.svg"/>
-</a>
-<a href="https://translate.jellyfin.org/projects/jellyfin/jellyfin-web/?utm_source=widget">
-<img src="https://translate.jellyfin.org/widgets/jellyfin/-/jellyfin-web/svg-badge.svg" alt="Translation Status"/>
-</a>
-<br/>
-<a href="https://opencollective.com/jellyfin">
-<img alt="Donate" src="https://img.shields.io/opencollective/all/jellyfin.svg?label=backers"/>
-</a>
-<a href="https://features.jellyfin.org">
-<img alt="Feature Requests" src="https://img.shields.io/badge/fider-vote%20on%20features-success.svg"/>
-</a>
-<a href="https://matrix.to/#/+jellyfin:matrix.org">
-<img alt="Chat on Matrix" src="https://img.shields.io/matrix/jellyfin:matrix.org.svg?logo=matrix"/>
-</a>
-<a href="https://www.reddit.com/r/jellyfin">
-<img alt="Join our Subreddit" src="https://img.shields.io/badge/reddit-r%2Fjellyfin-%23FF5700.svg"/>
-</a>
-</p>
+## What it does
 
-Jellyfin Web is the frontend used for most of the clients available for end users, such as desktop browsers, Android, and iOS. We welcome all contributions and pull requests! If you have a larger feature in mind please open an issue so we can discuss the implementation before you start. Translations can be improved very easily from our <a href="https://translate.jellyfin.org/projects/jellyfin/jellyfin-web">Weblate</a> instance. Look through the following graphic to see if your native language could use some work!
+- Adds a full-screen Butterchurn MilkDrop visualizer behind the Now Playing page
+- Automatically starts when music playback begins
+- Cycles through presets every 15 seconds
+- Pauses rendering when audio is paused
+- Cleans up when playback stops or you navigate away
+- Works alongside audio normalization
 
-<a href="https://translate.jellyfin.org/engage/jellyfin/?utm_source=widget">
-<img src="https://translate.jellyfin.org/widgets/jellyfin/-/jellyfin-web/multi-auto.svg" alt="Detailed Translation Status"/>
-</a>
+## Requirements
 
-## Build Process
+- Jellyfin server running
+- Node.js >= 24
+- npm >= 11
 
-### Dependencies
+## Docker (recommended)
 
-- [Node.js](https://nodejs.org/en/download)
-- npm (included in Node.js)
+```bash
+docker compose up --build -d
+```
 
-### Getting Started
+Dev server at `http://localhost:8080`. Point it at your Jellyfin server.
 
-1. Clone or download this repository.
+## Manual setup
 
-   ```sh
-   git clone https://github.com/jellyfin/jellyfin-web.git
-   cd jellyfin-web
-   ```
+```bash
+npm install
+npm start
+```
 
-2. Install build dependencies in the project directory.
+## How it works
 
-   ```sh
-   npm install
-   ```
+This is a patched fork of `jellyfin-web`. The changes are:
 
-3. Run the web client with webpack for local development.
+### New files
+- `src/components/visualization/musicVisualizer.js` — Butterchurn wrapper (init, render loop, preset cycling, resize, cleanup)
+- `patches/webcomponents.js+0.7.24.patch` — Fixes polyfill crash when TanStack Query DevTools passes an object to `document.createElement`
+- `Dockerfile` / `docker-compose.yml` / `.dockerignore` — Docker dev environment
 
-   ```sh
-   npm start
-   ```
+### Modified files
+- `src/plugins/htmlAudioPlayer/plugin.js` — Exposes `audioCtx` and `sourceNode` on the player instance so the visualizer can tap the audio graph
+- `src/components/remotecontrol/remotecontrol.js` — Lifecycle wiring: starts visualizer on playback, pauses/resumes on play/pause, destroys on stop/navigation
+- `src/components/remotecontrol/remotecontrol.scss` — Canvas styles (fixed position, opacity, z-index)
+- `package.json` — Added `butterchurn`, `butterchurn-presets`, `patch-package` deps and `postinstall` script
 
-4. Build the client with sourcemaps available.
+## License
 
-   ```sh
-   npm run build:development
-   ```
-
-Review the [Contributing Guide](./CONTRIBUTING.md) for more information on our process and tech stack.
+GPL-2.0-or-later (same as Jellyfin Web)

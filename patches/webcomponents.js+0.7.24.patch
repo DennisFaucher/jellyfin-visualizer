@@ -1,0 +1,15 @@
+diff --git a/node_modules/webcomponents.js/webcomponents-lite.js b/node_modules/webcomponents.js/webcomponents-lite.js
+index 957bd56..9f46823 100644
+--- a/node_modules/webcomponents.js/webcomponents-lite.js
++++ b/node_modules/webcomponents.js/webcomponents-lite.js
+@@ -2366,7 +2366,9 @@ window.CustomElements.addModule(function(scope) {
+     if (tag) {
+       tag = tag.toLowerCase();
+     }
+-    if (typeExtension) {
++    if (typeof typeExtension !== 'string') {
++      typeExtension = undefined;
++    } else {
+       typeExtension = typeExtension.toLowerCase();
+     }
+     var definition = getRegisteredDefinition(typeExtension || tag);

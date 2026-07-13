@@ -20,6 +20,7 @@ import itemContextMenu from '../itemContextMenu';
 import toast from '../toast/toast';
 import { appRouter } from '../router/appRouter';
 import { getDefaultBackgroundClass } from '../cardbuilder/utils/builder';
+import MusicVisualizer from '../visualization/musicVisualizer';
 
 import '../cardbuilder/card.scss';
 import '../../elements/emby-button/emby-button';
@@ -31,6 +32,8 @@ import '../../elements/emby-slider/emby-slider';
 
 let showMuteButton = true;
 let showVolumeSlider = true;
+let musicVisualizer = null;
+let resizeObserver = null;
 
 function showAudioMenu(context, player, button) {
     const currentIndex = playbackManager.getAudioStreamIndex(player);
@@ -508,6 +511,7 @@ export default function () {
         console.debug('remotecontrol event: ' + e.type);
         const player = this;
         onStateChanged.call(player, e, state);
+        startVisualizer(player);
     }
 
     function onRepeatModeChange() {
@@ -558,9 +562,28 @@ export default function () {
         }
     }
 
+    function stopVisualizer() {
+        if (musicVisualizer) {
+            musicVisualizer.stopRenderLoop();
+            musicVisualizer.stopPresetCycling();
+            musicVisualizer.destroy();
+            musicVisualizer = null;
+        }
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+            resizeObserver = null;
+        }
+        const container = document.getElementById('visualizationContainer');
+        if (container) {
+            container.remove();
+        }
+    }
+
     function onPlaybackStopped(e, state) {
         console.debug('remotecontrol event: ' + e.type);
         const player = this;
+
+        stopVisualizer();
 
         if (!state.NextMediaType) {
             updatePlayerState(player, dlg, {});
@@ -570,6 +593,16 @@ export default function () {
 
     function onPlayPauseStateChanged() {
         updatePlayPauseState(this.paused(), true);
+
+        if (musicVisualizer) {
+            if (this.paused()) {
+                musicVisualizer.stopRenderLoop();
+                musicVisualizer.stopPresetCycling();
+            } else {
+                musicVisualizer.startRenderLoop();
+                musicVisualizer.startPresetCycling();
+            }
+        }
     }
 
     function onStateChanged(event, state) {
@@ -614,6 +647,39 @@ export default function () {
         }
     }
 
+    function startVisualizer(player) {
+        if (player?.audioCtx && player?.sourceNode && dlg) {
+            if (!musicVisualizer) {
+                // Create canvas outside the mainAnimatedPage contain:block to avoid
+                // the 'contain: style size' causing 0-dimensions for absolute children.
+                let canvas = document.getElementById('musicVisualizerCanvas');
+                if (!canvas) {
+                    const container = document.createElement('div');
+                    container.className = 'visualization-container';
+                    container.id = 'visualizationContainer';
+                    canvas = document.createElement('canvas');
+                    canvas.id = 'musicVisualizerCanvas';
+                    canvas.className = 'musicVisualizerCanvas';
+                    container.appendChild(canvas);
+                    document.body.appendChild(container);
+                }
+
+                musicVisualizer = new MusicVisualizer();
+                const success = musicVisualizer.init(canvas, player.audioCtx, player.sourceNode);
+                if (!success) {
+                    musicVisualizer = null;
+                    return;
+                }
+                resizeObserver = new ResizeObserver(() => musicVisualizer?.resize());
+                resizeObserver.observe(canvas.parentElement);
+            }
+            if (musicVisualizer) {
+                musicVisualizer.startRenderLoop();
+                musicVisualizer.startPresetCycling();
+            }
+        }
+    }
+
     function bindToPlayer(context, player) {
         releaseCurrentPlayer();
         currentPlayer = player;
@@ -639,6 +705,9 @@ export default function () {
             const supportedCommands = playerInfo.supportedCommands;
             currentPlayerSupportedCommands = supportedCommands;
             updateSupportedCommands(context, supportedCommands);
+
+            // Start visualization if player is already playing
+            startVisualizer(player);
         }
     }
 
@@ -905,6 +974,7 @@ export default function () {
     }
 
     function onDialogClosed() {
+        stopVisualizer();
         releaseCurrentPlayer();
         Events.off(playbackManager, 'playerchange', onPlayerChange);
         lastPlayerState = null;
