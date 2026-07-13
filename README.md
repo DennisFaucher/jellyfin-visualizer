@@ -2,6 +2,9 @@
 
 A [Butterchurn](https://github.com/jagheterfredrik/butterchurn) (MilkDrop) visualization plugin for [Jellyfin Web](https://github.com/jellyfin/jellyfin-web). Renders WebGL visualizations behind the Now Playing page while music plays.
 
+<img width="1229" height="792" alt="image" src="https://github.com/user-attachments/assets/e3ccaee9-8b5d-4d3e-82ac-7013251f55f0" />
+
+
 ## What it does
 
 - Adds a full-screen Butterchurn MilkDrop visualizer behind the Now Playing page
